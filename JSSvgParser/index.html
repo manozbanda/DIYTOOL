@@ -1,0 +1,332 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Sensor Generator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/common/svg.js.js"></script>
+    <script type="text/javascript" src="js/svgParsing/svgParser.js"></script>
+    <script type="text/javascript" src="js/svgParsing/pathUtils.js"></script>
+    <script type="text/javascript" src="js/common/astar_routing.js"></script>
+    <script type="text/javascript" src="js/common/utils.js"></script>
+    <script type="text/javascript" src="js/common/polygon_utils.js"></script>
+    <script type="text/javascript" src="js/ElectrodeGenerator.js"></script>
+    <script type="text/javascript" src="js/routingGeneration.js"></script>
+    <script>
+        var svgContent;
+        function onUpload() {
+            var pointList = new Array();
+            var svgLoader = document.getElementById('fileChooser');
+            svgLoader.addEventListener('change', handleFileSelection, false);
+            var svg = document.getElementsByTagName('svg')[0];
+
+            function handleFileSelection() {
+                var file = fileChooser.files[0],
+                    reader = new FileReader();
+
+                waitForTextReadComplete(reader);
+                reader.readAsText(file);
+            }
+
+            function parseTextAsXml(text) {
+                var parser = new DOMParser(),
+                xmlDom = parser.parseFromString(text, "text/xml");
+                var svg = document.getElementsByTagName('svg')[0]; //Get svg element
+
+                parseSVG(xmlDom, svg);
+                convertPathsToPolygons(document, svg);
+            }
+
+            function waitForTextReadComplete(reader) {
+                reader.onloadend = function (event) {
+                    var text = event.target.result;
+
+                    parseTextAsXml(text);
+                }
+            }
+        }
+    </script>
+    <script>
+        var svgContent;
+        function generatePoints() {
+            var svg = document.getElementsByTagName('svg')[0];
+            var inputPolygon = document.getElementById("inputShape");
+            var boundaryPolygon = document.getElementById("boundaryShape");
+            var connector = document.getElementById("connector");
+
+            var inputPointString = inputPolygon.getAttribute("points");
+            document.getElementById("inputPointList").innerHTML = inputPointString;
+            console.log(inputPointString);
+
+            var boundaryPointString = boundaryPolygon.getAttribute("points");
+            document.getElementById("boundaryPointList").innerHTML = boundaryPointString;
+            console.log(boundaryPointString);
+
+            var connectorPointString = connector.getAttribute("points");
+            document.getElementById("connectorPointList").innerHTML = connectorPointString;
+            console.log(connectorPointString);
+
+            var draw = SVG('two').size(500, 500);
+            draw.viewbox(0, 0, 210, 297);
+            var electrodeSize = 15;
+            var electrodeSpacing = electrodeSize * 1.5;
+            var rowSpacing = electrodeSize * 1.5;
+
+            var inputPolygonShape = draw.polygon(inputPointString).fill('none').stroke({ width: 1 })
+            inputPolygonShape.fill('none');
+            inputPolygonShape.stroke({ color: '#080', width: 1, linecap: 'round', linejoin: 'round' });
+
+
+            var boundaryPolygonShape = draw.polygon(boundaryPointString).fill('none').stroke({ width: 1 });
+            boundaryPolygonShape.fill('none');
+            boundaryPolygonShape.stroke({ color: '#888', width: 1, linecap: 'round', linejoin: 'round' });
+
+
+            var connectorBlock = draw.polygon(connectorPointString).fill('none').stroke({ width: 1 });
+            connectorBlock.fill('#000');
+            connectorBlock.stroke({ color: '#000', width: 1, linecap: 'round', linejoin: 'round' });
+
+            /*var pathGroup = draw.group();
+            pathGroup.add(inputPolygonShape);
+            pathGroup.add(boundaryPolygonShape);
+            pathGroup.add(connectorBlock);*/
+
+            var rowElectrodes = new Array();
+            var columnElectrodes = new Array();
+            var inputShapePointList = convertpointStringToPointList(inputPointString);
+            var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+            var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+            var gridElementSize = 1;
+            var astarGraph = [[]];
+            astarGraph = init_AStar(astarGraph, 500, 500, 1, 1);
+            createAstarGraphWithBoundary(astarGraph, boundaryShapePointList);
+
+            var bBox = generateBoundingBox(inputShapePointList, draw, false);
+            console.log(bBox.x());
+
+
+            var numRows = Math.floor(bBox.height() / (electrodeSize * 1.5));
+            var numColumns = Math.floor(bBox.width() / (electrodeSize * 1.5));
+            console.log("Rows : " + numRows + ", Columns : " + numColumns);
+
+            if (numRows < 3 && numColumns < 3) {
+                alert("Input shape too small!!!! Please provide a larger polygon");
+                //return;
+            }
+
+            rowElectrodes = generateRows(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x(), bBox.y(), rowElectrodes, draw);
+            columnElectrodes = generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x() + (electrodeSpacing * 0.5), bBox.y() - (electrodeSpacing * 0.5), columnElectrodes, draw);
+
+            rowElectrodes = filterRows(rowElectrodes, columnElectrodes, inputShapePointList, numRows, numColumns, draw);
+            columnElectrodes - filterColumns(rowElectrodes, columnElectrodes, inputShapePointList, numRows, numColumns, draw);
+
+            rowElectrodes = checkForDanglingRowElectrodes(rowElectrodes, columnElectrodes, inputShapePointList, draw);
+            columnElectrodes = checkForDanglingColumnElectrodes(rowElectrodes, columnElectrodes, inputShapePointList, draw);
+
+            filteredRowElectrodes = getActiveElectrodes(rowElectrodes);
+            filteredColumnElectrodes = getActiveElectrodes(columnElectrodes);
+
+            //block the path that is outside the input polygon, to enable series connection of electrodes
+            console.log("X : " + bBox.x() + "Y: " + bBox.y() + "Width: " + bBox.width() + "Height: " + bBox.height());
+            for (var i = bBox.x(); i < bBox.x() + bBox.width(); i++) {
+                for (var j = bBox.y(); j < bBox.y() + bBox.height(); j++) {
+                    if (!pointInsidePolygon([i, j], inputShapePointList)) {
+                        astarGraph[Math.floor(i)][Math.floor(j)] = 1;
+                    }
+                }
+            }
+          //  astarGraph = seriesConnectColumns(numRows, numColumns, filteredRowElectrodes, filteredColumnElectrodes, astarGraph, draw);
+
+            for (var i = 0; i < filteredColumnElectrodes.length; i++) {
+                var numElectrodesInColumn = filteredColumnElectrodes[i].length;
+                if (numElectrodesInColumn > 0) {
+                    for (var j = 0; j < numElectrodesInColumn; j++) {
+                        var startX = filteredColumnElectrodes[i][j].cx() - (filteredColumnElectrodes[i][j].width() * Math.sqrt(2) / 2);
+                        var startY = filteredColumnElectrodes[i][j].cy() - (filteredColumnElectrodes[i][j].height() * Math.sqrt(2) / 2);
+
+                        var endX = filteredColumnElectrodes[i][j].cx() + (filteredColumnElectrodes[i][j].width() * Math.sqrt(2) / 2);
+                        var endY = filteredColumnElectrodes[i][j].cy() + (filteredColumnElectrodes[i][j].height() * Math.sqrt(2) / 2);
+
+                        for (var k = startX; k < endX; k++) {
+                            astarGraph[Math.floor(k)][Math.floor(filteredColumnElectrodes[i][j].cy())] = 1;
+
+                            /* var rect1 = draw.rect(1, 1).x(k).y(filteredColumnElectrodes[i][j].cy()).attr({
+                                 stroke: '#000',
+                                 fill: '#000'
+                             });*/
+                        }
+
+                        for (var m = startY; m < endY; m++) {
+                            astarGraph[Math.floor(filteredColumnElectrodes[i][j].cx())][Math.floor(m)] = 1;
+
+                            /*var rect1 = draw.rect(1, 1).x(filteredColumnElectrodes[i][j].cx()).y(m).attr({
+                                stroke: '#000',
+                                fill: '#000'
+                            });*/
+                        }
+                    }
+
+                    /*var startX = filteredColumnElectrodes[i][0].cx();
+                    var startY = filteredColumnElectrodes[i][0].cy();
+
+                    var endY = filteredColumnElectrodes[i][numElectrodesInColumn - 1].cy();
+
+                    for (var j = startY; j < endY; j++) {
+                        astarGraph[Math.floor(startX)][Math.floor(j)] = 1;
+
+                        var rect1 = draw.rect(1, 1).x(startX).y(j).attr({
+                            stroke: '#000',
+                            fill: '#000'
+                        });
+                    }*/
+
+                }
+            }
+         //   astarGraph = seriesConnectRows(numRows, numColumns, filteredRowElectrodes, filteredColumnElectrodes, astarGraph, draw);
+
+            //close the bouding box of the polygon so that the routing goes only outwards to the connector block
+          /*  for (var i = bBox.x(); i < bBox.x() + bBox.width(); i++) {
+                for (var j = bBox.y(); j < bBox.y() + bBox.height(); j++) {
+                    if (!pointInsidePolygon([i, j], inputShapePointList)) {
+                        astarGraph[Math.floor(i)][Math.floor(j)] = 0;
+
+                        /* var rect1 = draw.rect(1, 1).x(i).y(j).attr({
+                             stroke: '#000',
+                             fill: '#000'
+                         });
+                    }
+                }
+            }*/
+           /* astarGraph = blockAllElectrodes(astarGraph, filteredRowElectrodes, filteredColumnElectrodes, draw);
+            var connectorBlock = new Array();
+            var connectorDimensions = getPathDimensions(connectorPointList);
+            if (connectorDimensions[2] > connectorDimensions[3]) {
+                console.log("Horizontal Connector");
+                if ((connectorDimensions[2] / 10) < (numRows + numColumns)) {
+                    alert("Size of the connector short for the Sensor!! Generating appropriate Connector!!");
+                    connectorBlock = generateConnector(astarGraph, numRows + numColumns, connectorDimensions[0], connectorDimensions[1], 10, connectorDimensions[3], draw);
+                } else {
+                    connectorBlock = generateConnector(astarGraph, connectorDimensions[2] / 10, connectorDimensions[0], connectorDimensions[1], 10, connectorDimensions[3], draw);
+                }
+            } else {
+                console.log("Vertical Connector");
+                if ((connectorDimensions[3] / 10) <= (numRows + numColumns)) {
+                    alert("Size of the connector short for the Sensor!!");
+                    connectorBlock = generateVerticalConnector(astarGraph, numRows + numColumns, connectorDimensions[0], connectorDimensions[1], connectorDimensions[2], 10, draw);
+                } else {
+                    connectorBlock = generateVerticalConnector(astarGraph, connectorDimensions[3] / 10, connectorDimensions[0], connectorDimensions[1], connectorDimensions[2], 10, draw);
+                }
+            }
+
+            astarGraph = connectorBlock[0];
+            connectorBlock = connectorBlock[1];
+
+            astarGraph = blockAllElectrodes(astarGraph, filteredRowElectrodes, filteredColumnElectrodes, draw);*/
+
+            /*svgContent = draw.svg();
+            var uriContent = "data:application/octet-stream," + encodeURIComponent(svgContent);
+            newWindow = window.open(uriContent, 'svgDocument');*/
+           /* astarGraph = routeColumnsToConnector(astarGraph, filteredColumnElectrodes, connectorBlock, 0, draw);
+
+
+            astarGraph = routeRowsToConnector(astarGraph, filteredRowElectrodes, connectorBlock, numColumns, draw);*/
+
+            svgContent = draw.svg();
+
+        }
+    </script>
+    <script type="text/javascript">
+            function downloadSVG() {
+
+                var uriContent = "data:application/octet-stream," + encodeURIComponent(svgContent);
+                newWindow = window.open(uriContent, 'svgDocument');
+
+            }
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <img src="./images/Picture1.png" style="display: inline-block;" heigh="50" width="50">
+                <span style="display: inline-block; color:wheat ;font-size:24px">Multi-Touch Sensor</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!--<div class="col-sm-6" style="background-color:lavender; padding-bottom: 50px;">
+            <h2>Input Shape</h2>
+            <div class="uploader" onclick="onUpload()" style="text-align: center;">
+                Click 'Select svg' or drop here your input shape
+            </div>
+        </div>-->
+
+        <div class="fileUpload btn btn-primary btn-lg input-append ">
+            <span>Select svg</span>
+            <input type="file" name="upload_picture" id="fileChooser" data-input="false" class="upload" onclick="onUpload()" />
+        </div>
+        <button type="button" class="btn btn-info btn-lg" style="background-color:green" onclick="generatePoints()">Generate Electrodes</button>
+        <button type="button" class="btn btn-info btn-lg" style="background-color:#800000" onclick="generatePoints()">Generate Routings</button>
+        <button type="button" class="btn btn-info btn-lg" onclick="downloadSVG()">Download SVG</button>
+
+
+        <div id="slidecontainer">
+            <h3> Scale the electrode Size: </h3>
+            <input type="range" min="10" max="100" value="20" class="slider" id="myRange">
+            <p>Value: <span id="demo"></span></p>
+        </div>
+        <div id="slidecontainer">
+            <h3> Scale the  outer polygon : </h3>
+            <input type="range" min="150" max="300" value="200" class="slider" id="myRange">
+            <p>Value: <span id="demo1"></span></p>
+        </div>
+        <div id="slidecontainer">
+            <h3> Scale the  Electrode spacing : </h3>
+            <input type="range" min="15" max="150" value="30" class="slider" id="myRange">
+            <p>Value: <span id="demo2"></span></p>
+        </div>
+        <section id="one" class="well" style="margin-top: -280px">
+            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297"
+                 xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="500" x="-250" y="-100">
+            </svg>
+
+        </section>
+        <section id="two" class="well"></section>
+
+        <!-- <input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="20" data-slider-step="1" data-slider-value="14" />-->
+        <!--<section>
+            <div id="one" class="well">
+                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"
+                     xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="500" x="-250" y="-250">
+                </svg>
+
+            </div>
+
+            <div id="two" class="well"></div>
+
+        </section>-->
+
+
+
+        <p id="inputPointList"></p>
+        <p id="boundaryPointList"></p>
+        <p id="connectorPointList"></p>
+    </div>
+</body>
+
+
+
+
+
+
+
+</html>

@@ -1,0 +1,1 @@
+C:\Users\Aditya\Documents\Visual Studio 2017\Projects\JSSvgParser\JSSvgParser\JSSvgParser.jsproj;neutral

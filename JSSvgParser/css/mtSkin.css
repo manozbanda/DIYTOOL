@@ -1,0 +1,40 @@
+﻿
+/*.containerdiv {
+      border: 0;
+      float: left;
+      position: relative;
+    } */
+.imgsrc3 {
+    border: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    color: #666;
+}
+
+
+
+.fileUpload {
+    position: relative;
+    overflow: hidden;
+    margin: 10px;
+}
+
+    .fileUpload input.upload {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 0;
+        padding: 0;
+        font-size: 20px;
+        cursor: pointer;
+        opacity: 0;
+        filter: alpha(opacity=0);
+    }
+

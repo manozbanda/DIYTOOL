@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Sensor Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/default.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+    <script src="js/main.js"></script>
+    <script type="text/javascript" src="js/svg.js.js"></script>
+    <script src="js/svgParser.js"></script>
+    <script>
+        function onUpload() {
+            var pointList = new Array();
+            var svgLoader = document.getElementById('fileChooser');
+            svgLoader.addEventListener('change', handleFileSelection, false);
+            var svg = document.getElementsByTagName('svg')[0];
+           
+            function handleFileSelection() {
+                var file = fileChooser.files[0],
+                    reader = new FileReader();
+
+                waitForTextReadComplete(reader);
+                reader.readAsText(file);
+            }
+
+            function parseTextAsXml(text) {
+                var parser = new DOMParser(),
+                xmlDom = parser.parseFromString(text, "text/xml");
+                var svg = document.getElementsByTagName('svg')[0]; //Get svg element
+            
+                parseSVG(xmlDom, svg);
+            }
+
+            function waitForTextReadComplete(reader) {
+                reader.onloadend = function (event) {
+                    var text = event.target.result;
+
+                    parseTextAsXml(text);
+                }
+            }
+        }
+    </script>
+    <script>
+            function genPoints() {
+              
+                var svg = document.getElementsByTagName('svg')[0];
+                var inputPolygon = document.getElementById("inputShape");
+                console.log(inputPolygon.getBoundingClientRect());
+                var boundaryPolygon = document.getElementById("boundaryShape");
+                console.log(boundaryPolygon.getBoundingClientRect());
+                var connector = document.getElementById("connector");
+                console.log(connector.getBoundingClientRect());
+
+                var inputShapeStyle = inputPolygon.getAttribute("style");
+                var boundaryShapeStyle = boundaryPolygon.getAttribute("style");
+                console.log(inputShape.style);
+                console.log(boundaryShapeStyle);
+
+                var inputCX = inputPolygon.getBoundingClientRect().left + (inputPolygon.getBoundingClientRect().width / 2);
+                var inputCY = inputPolygon.getBoundingClientRect().top + (inputPolygon.getBoundingClientRect().height / 2);
+                console.log("InputCX : " + inputCX + ", InputCY : " + inputCY);
+
+                var boundaryCX = boundaryPolygon.getBoundingClientRect().left + (boundaryPolygon.getBoundingClientRect().width / 2);
+                var boundaryCY = boundaryPolygon.getBoundingClientRect().top + (boundaryPolygon.getBoundingClientRect().height / 2 );
+                console.log("boundaryCX : " + boundaryCX + ", boundaryCY : " + boundaryCY);
+
+                var diffCX = inputCX - boundaryCX;
+                var diffCY = inputCY - boundaryCY;
+                console.log("diffCX : " + diffCX + ", diffCY : " + diffCY);
+
+                var inputPointString = "";
+                var boundaryPointString = "";
+                var point = new Array();
+                var inputShapePointList = new Array();
+                var boundaryShapePointList = new Array();
+                for (var i = 0; i < inputPolygon.getTotalLength(); i+= 3) {
+                   // inputPolygon.getPointAtLength(i);
+                    point = [];
+                    point[0] = inputPolygon.getPointAtLength(i).x;
+                    point[1] = inputPolygon.getPointAtLength(i).y;
+                    //console.log(point);
+                    inputShapePointList.push(point);
+                    inputPointString = inputPointString + point.toString();
+                    inputPointString = inputPointString + " ";
+                }
+                for (var i = 0; i < boundaryPolygon.getTotalLength(); i+= 3) {
+                    // inputPolygon.getPointAtLength(i);
+                    point = [];
+                    point[0] = boundaryPolygon.getPointAtLength(i).x;
+                    point[1] = boundaryPolygon.getPointAtLength(i).y;
+                    //console.log(point);
+                    boundaryShapePointList.push(point);
+                    boundaryPointString = boundaryPointString + point.toString();
+                    boundaryPointString = boundaryPointString + " ";
+                }
+                
+             //   console.log(pathString);
+                var draw = SVG('two').size(2000, 2000);
+                var electrodeSize = 19;
+                var electrodeSpacing = electrodeSize * 1.5;
+                var rowSpacing = electrodeSize * 1.5;
+
+                var inputPolygonShape = draw.polygon(inputPointString).fill('none').stroke({ width: 1 })
+                inputPolygonShape.fill('none').move(400, 400);
+                inputPolygonShape.stroke()
+                inputPolygonShape.stroke({ color: '#080', width: 1, linecap: 'round', linejoin: 'round' });
+                console.log(inputPolygonShape.bbox());
+                inputPolygonShape.scale(5, 5);
+                console.log(inputPolygonShape.bbox());
+
+
+                var boundaryPolygonShape = draw.polygon(boundaryPointString).fill('none').stroke({ width: 1 });
+                boundaryPolygonShape.fill('none').move(360 - diffCX, 360 - diffCY);
+                //boundaryPolygonShape.stroke()
+                boundaryPolygonShape.stroke({ color: '#888', width: 1, linecap: 'round', linejoin: 'round' });
+                console.log(boundaryPolygonShape.bbox());
+                boundaryPolygonShape.scale(5, 5);
+               // boundaryPolygonShape.move(400, 400);
+                //boundaryPolygonShape.cx(600);
+                //boundaryPolygonShape.cy(600);
+                console.log(boundaryPolygonShape.bbox());
+               
+            }
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header"> <img src="./images/Picture1.png" style="display: inline-block;"
+
+            height="50" width="50"> <span style="display: inline-block;">Sensor
+            Generator</span> </div>
+      </div>
+    </nav>
+    <div class="container-fluid">
+      <div class="col-sm-6" style="background-color:lavender; padding-bottom: 50px;">
+        <h2>Input Shape</h2>
+        <div class="uploader" onclick="onUpload()" style="text-align: center;">
+          Click 'Select svg' or drop here your input shape </div>
+      </div>
+      <div class="fileUpload btn btn-primary btn-lg input-append "> <span>Select
+          svg</span>&nbsp; </div>
+      <button type="button" class="btn btn-info btn-lg" onclick="genPoints()">Generate
+        Points</button>
+      <!--<div id="wrapperDiv">
+            <div id="svgCanvas">                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"                     xmlns:xlink="http://www.w3.org/1999/xlink" width="500mm" height="500mm" x="-250" y="-250">                </svg>            </div>            <div id="drawing">            </div>        </div>-->
+      <!--  <section id="wrapperDiv">
+            <div id="svgCanvas">                            </div>            <div id="drawing">                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"                     xmlns:xlink="http://www.w3.org/1999/xlink" width="500mm" height="500mm" x="-250" y="-250">                </svg>            </div>        </section>          -->
+      <!--  <div id="svgCanvas" class="inputSVG">
+            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"                 xmlns:xlink="http://www.w3.org/1999/xlink" width="500mm" height="500mm" x="-250" y="-250">            </svg>        </div>        <div id="drawing" class="outputSVG">        </div>-->
+      <!--<div class="fileUpload btn btn-primary btn-lg">
+            <span>Select svg</span>            <input type="file" name="upload_picture" id="filePhoto" data-input="false" class="upload" />        </div>-->
+    
+    <section class="container-fluid well"><br>
+      <div class="well"><br>
+    	</div>
+    	<div class="well"><br>
+    	</div>
+    </section>
+   
+  </body>
+</html>

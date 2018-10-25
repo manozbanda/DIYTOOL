@@ -1,0 +1,509 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Sensor Generator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link href="css/mtSkin.css" rel="stylesheet" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+
+    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/common/svg.js.js"></script>
+    <script type="text/javascript" src="js/svgParsing/svgParser.js"></script>
+    <script type="text/javascript" src="js/svgParsing/pathUtils.js"></script>
+    <script type="text/javascript" src="js/common/astar_routing.js"></script>
+    <script type="text/javascript" src="js/common/utils.js"></script>
+    <script type="text/javascript" src="js/common/polygon_utils.js"></script>
+    <script type="text/javascript" src="js/ElectrodeGenerator.js"></script>
+    <script type="text/javascript" src="js/routingGeneration.js"></script>
+    <script type="text/javascript" src="js/layerRenderer/tx_rx_layerRenderer.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <img src="images/picture1.png" style="display: inline-block;" height="50" width="50">
+                <span style="display: inline-block; color:wheat ;font-size:24px">Multi-Touch Skin</span>
+            </div>
+        </div>
+    </nav>
+
+</body>
+
+<div class="container-fluid">
+    <div class="col-sm-6" style="background-color:lavender; padding-bottom: 50px;">
+        <h2>Input Shape</h2>
+        <div id="uploadDiv" class="uploader"  onclick="onUpload()" style="text-align: center;">
+            <p id="selectSVG">Click 'Select svg' or drop here your input shape</p>
+            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 520"
+                 xmlns:xlink="http://www.w3.org/1999/xlink" width="300" height="520" x="0" y="0">
+            </svg>
+        </div>
+    </div>
+    <div id="result" style="display:none;">
+        <div class="col-sm-6" style="background-color:lavenderblush; padding-bottom: 10px;">
+            <h2>Sensor Design</h2>
+            <div class="tabbable tabs-bottom">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" href="#home" onclick="hide_save()">Complete</a></li>
+                    <li><a data-toggle="tab" href="#RXLayer" onclick="renderRXLayer()">Receiver</a></li>
+                    <li><a data-toggle="tab" href="#TXLayer" onclick="renderTXLayer()">Transmitter</a></li>
+                    <li><a data-toggle="tab" href="#shieldLayer" onclick="renderShieldLayer()">Shielding Layer</a></li>
+
+                </ul>
+                <div class="tab-content">
+                    <div id="home" class="tab-pane fade in active">
+                        <img id='ad' width="auto" height="auto" />
+                    </div>
+                    <!--<div id="menu2" class="tab-pane fade">
+                        <img src="s3.png" />
+                    </div>-->
+                   <!-- <div id="menu3" class="tab-pane fade">
+                        <img src="s4.png" />
+                    </div>-->
+                    <div id="RXLayer" class="tab-pane fade">
+                    </div>
+                    
+                    <div id="TXLayer" class="tab-pane fade">
+                    </div>
+                    <!--<div id="menu4" class="tab-pane fade">
+                        <img src="s5.png" />
+                    </div>-->
+                    <div id="shieldLayer" class="tab-pane fade">
+                    </div>
+
+                </div>
+            </div>
+            <!-- <div id="imgsrc" width="300px" height="350px">
+            </div> -->
+            <!-- /tabs -->
+
+        </div>
+    </div>
+</div>
+<div class="fileUpload btn btn-primary btn-lg">
+    <span>Select svg</span>
+    <input type="file" name="upload_picture" id="filePhoto" data-input="false" class="upload" />
+</div>
+<!--<button onclick="show()" id="myBtn" class="btn btn-success btn-lg" onkeypress="astarfail()">Generate Routing</button>-->
+<button onclick="generateSensor()" id="myBtn" class="btn btn-success btn-lg" onkeypress="astarfail()">Generate Routing</button>
+<button id="save" class="btn btn-info btn-lg" onclick="downloadSVG()" style="margin-left: 960px; margin-top: -60px; display:none;">Save</button>
+
+</div>
+
+
+<script type="text/javascript">
+
+    var svgLoader = document.getElementById('filePhoto');
+    svgLoader.addEventListener('change', handleFileSelection, false);
+    var svg = document.getElementsByTagName('svg')[0];
+
+    var draw = SVG('home').size(300, 520);
+    var shieldLayer = SVG('shieldLayer').size(300, 520);
+    var rxLayer = SVG('RXLayer').size(300, 520);
+    var txLayer = SVG('TXLayer').size(300, 520);
+    rxLayer.viewbox(0, 0, 300, 520);
+
+    var svgContent;
+    txLayer.viewbox(0, 0, 300, 520);
+    var rowElectrodes = new Array();
+    var columnElectrodes = new Array();
+
+    var electrodeSize = 12;
+    var electrodeSpacing = electrodeSize * 1.5;
+    var rowSpacing = electrodeSize * 1.5;
+
+    var inputShapePointList;
+    var boundaryShapePointList;
+    var connectorPointList;
+
+    function handleFileSelection() {
+        var uploadDiv = document.getElementById('uploadDiv');
+        var selectSVG = document.getElementById('selectSVG');
+        uploadDiv.removeChild(selectSVG);
+        var file = filePhoto.files[0],
+            reader = new FileReader();
+
+        waitForTextReadComplete(reader);
+        reader.readAsText(file);
+    }
+
+    function parseTextAsXml(text) {
+        var parser = new DOMParser(),
+            xmlDom = parser.parseFromString(text, "text/xml");
+        var svg = document.getElementsByTagName('svg')[0]; //Get svg element
+
+        parseSVG(xmlDom, svg);
+        convertPathsToPolygons(document, svg);
+    }
+
+    function waitForTextReadComplete(reader) {
+        reader.onloadend = function (event) {
+            var text = event.target.result;
+
+            parseTextAsXml(text);
+        }
+    }
+
+
+    function show() {
+        var images = new Array();
+        // for (var i = 2; i < 11; i++) {
+        //     images.push("img" + i + ".gif");
+        // }
+        document.getElementById('result').style.display = "block";
+        images[0] = "s2.png";
+        images[1] = "img1.gif";
+        images[2] = "s6.png"
+
+        var x = 0;
+
+        function changeImage() {
+            document.getElementById('ad').src = images[x];
+            if (x < 2) {
+                x += 1;
+            } if (x == 2) {
+                x = 2;
+
+            }
+            console.log(x);
+        }
+        setInterval(function () {
+            changeImage();
+        }, 1000);
+
+    }
+
+    function show_save() {
+        document.getElementById('save').style.display = "block";
+    }
+
+    function hide_save() {
+        document.getElementById('save').style.display = "none";
+    }
+
+    function show2() {
+        document.getElementById('ad2').src = "b.png";
+        document.getElementById("myBtn").disabled = false;
+    }
+
+    function somefunc() {
+        //bootbox.prompt("This is the default prompt!", function(result){ console.log(result); });
+
+        function encode(s) {
+            var out = [];
+            for (var i = 0; i < s.length; i++) {
+                out[i] = s.charCodeAt(i);
+            }
+            return new Uint8Array(out);
+        }
+
+        var test = document.getElementById('save');
+        test.addEventListener('click', function () {
+
+            var data = encode('Save');
+            var blob = new Blob([data], {
+                type: 'application/octet-stream'
+            });
+
+            url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'sensor_image.svg');
+
+            var event = document.createEvent('MouseEvents');
+            event.initMouseEvent('click', true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+            link.dispatchEvent(event);
+        });
+    }
+
+    function astarfail() {
+        alert("A-star couldn't produce the result. Please check the initial image");
+        document.getElementById('imgsrc3').src = "error.jpg";
+    }
+
+    function generateSensor() {
+        console.log("Generating Electrodes!!");
+        document.getElementById('result').style.display = "block";
+        /*var images = new Array();
+        document.getElementById('result').style.display = "block";
+        images[0] = "s2.png";
+        images[1] = "img1.gif";
+        images[2] = "s6.png";*/
+
+        
+        draw.viewbox(0, 0, 300, 520);
+       
+
+        var svg = document.getElementsByTagName('svg')[0];
+        var inputPolygon = document.getElementById("inputShape");
+        var boundaryPolygon = document.getElementById("boundaryShape");
+        var connector = document.getElementById("connector");
+
+        var inputPointString = inputPolygon.getAttribute("points");
+      //  document.getElementById("inputPointList").innerHTML = inputPointString;
+        console.log(inputPointString);
+
+        var boundaryPointString = boundaryPolygon.getAttribute("points");
+      ///  document.getElementById("boundaryPointList").innerHTML = boundaryPointString;
+        console.log(boundaryPointString);
+
+        var connectorPointString = connector.getAttribute("points");
+      //  document.getElementById("connectorPointList").innerHTML = connectorPointString;
+        console.log(connectorPointString);
+
+
+       
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var gridElementSize = 1;
+        var astarGraph = [[]];
+        astarGraph = init_AStar(astarGraph, 600, 1040, 1, 1);
+        createAstarGraphWithBoundary(astarGraph, boundaryShapePointList);
+
+      
+
+
+        var inputPolygonShape = draw.polygon(inputPointString).fill('none').stroke({ width: 1 })
+        inputPolygonShape.fill('none');
+        inputPolygonShape.stroke({ color: '#080', width: 1, linecap: 'round', linejoin: 'round' });
+
+        var bBox = generateBoundingBox(inputShapePointList, draw, false);
+        console.log(bBox.x());
+
+        var numRows = Math.floor(bBox.height() / (electrodeSize * 1.5));
+        var numColumns = Math.floor(bBox.width() / (electrodeSize * 1.5));
+        console.log("Rows : " + numRows + ", Columns : " + numColumns);
+
+        if (numRows < 3 && numColumns < 3) {
+            alert("Input shape too small!!!! Please provide a larger polygon");
+            //return;
+        }
+
+        rowElectrodes = generateRows(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x(), bBox.y(), rowElectrodes, draw);
+        columnElectrodes = generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x() + (electrodeSpacing * 0.5), bBox.y() - (electrodeSpacing * 0.5), columnElectrodes, draw);
+
+        rowElectrodes = filterRows(rowElectrodes, columnElectrodes, inputShapePointList, numRows, numColumns, draw,);
+        columnElectrodes = filterColumns(rowElectrodes, columnElectrodes, inputShapePointList, numRows, numColumns, draw);
+
+        rowElectrodes = checkForDanglingRowElectrodes(rowElectrodes, columnElectrodes, inputShapePointList, draw);
+        columnElectrodes = checkForDanglingColumnElectrodes(rowElectrodes, columnElectrodes, inputShapePointList, draw);
+
+        filteredRowElectrodes = getActiveElectrodes(rowElectrodes);
+        filteredColumnElectrodes = getActiveElectrodes(columnElectrodes);
+
+        console.log("X : " + bBox.x() + "Y: " + bBox.y() + "Width: " + bBox.width() + "Height: " + bBox.height());
+        astarGraph = blockRegionOutSidePolygon(bBox, inputShapePointList, draw);
+
+   
+
+        astarGraph = seriesConnectColumns(numRows, numColumns, filteredRowElectrodes, filteredColumnElectrodes, astarGraph, draw, txLayer);
+        //
+      /*  for (var i = 0; i < filteredColumnElectrodes.length; i++) {
+            var numElectrodesInColumn = filteredColumnElectrodes[i].length;
+            if (numElectrodesInColumn > 0) {
+                for (var j = 0; j < numElectrodesInColumn; j++) {
+                    var startX = filteredColumnElectrodes[i][j].cx() - (filteredColumnElectrodes[i][j].width() * Math.sqrt(2) / 2);
+                    var startY = filteredColumnElectrodes[i][j].cy() - (filteredColumnElectrodes[i][j].height() * Math.sqrt(2) / 2);
+
+                    var endX = filteredColumnElectrodes[i][j].cx() + (filteredColumnElectrodes[i][j].width() * Math.sqrt(2) / 2);
+                    var endY = filteredColumnElectrodes[i][j].cy() + (filteredColumnElectrodes[i][j].height() * Math.sqrt(2) / 2);
+
+                    for (var k = startX; k < endX; k++) {
+                        astarGraph[Math.floor(k)][Math.floor(filteredColumnElectrodes[i][j].cy())] = 1;
+
+                        /* var rect1 = draw.rect(1, 1).x(k).y(filteredColumnElectrodes[i][j].cy()).attr({
+                             stroke: '#000',
+                             fill: '#000'
+                         });
+                    }
+
+                    for (var m = startY; m < endY; m++) {
+                        astarGraph[Math.floor(filteredColumnElectrodes[i][j].cx())][Math.floor(m)] = 1;
+
+                        /*var rect1 = draw.rect(1, 1).x(filteredColumnElectrodes[i][j].cx()).y(m).attr({
+                            stroke: '#000',
+                            fill: '#000'
+                        });
+                    }
+                }              
+            }
+        }*/
+        astarGraph = seriesConnectRows(numRows, numColumns, filteredRowElectrodes, filteredColumnElectrodes, astarGraph, draw, rxLayer);
+
+        astarGraph = freeWallOutsideInputShape(astarGraph, bBox, inputShapePointList, draw);
+       /* for (var i = Math.floor(bBox.x()); i < bBox.x() + bBox.width(); i++) {
+            for (var j = Math.floor(bBox.y()); j < bBox.y() + bBox.height(); j++) {
+                if (!pointInsidePolygon([i, j], inputShapePointList)) {
+                    astarGraph[Math.floor(i)][Math.floor(j)] = 0;
+
+                        /* var rect1 = draw.rect(1, 1).x(i).y(j).attr({
+                             stroke: '#000',
+                             fill: '#000'
+                         });
+                }
+            }
+        }*/
+
+
+        var connectorBlock = new Array();
+      //  connectorBlock = generateConnector(astarGraph, numRows + numColumns, 100, 10, 10, 10, draw);
+
+        var connectorDimensions = getPathDimensions(connectorPointList);
+        if (connectorDimensions[2] > connectorDimensions[3]) {
+            console.log("Horizontal Connector");
+            if ((connectorDimensions[2] / 10) < (numRows + numColumns)) {
+                alert("Size of the connector short for the Sensor!! Generating appropriate Connector!!");
+                connectorBlock = generateConnector(astarGraph, numRows + numColumns, connectorDimensions[0], connectorDimensions[1], 10, connectorDimensions[3], draw);
+            } else {
+                connectorBlock = generateConnector(astarGraph, connectorDimensions[2] / 10, connectorDimensions[0], connectorDimensions[1], 10, connectorDimensions[3], draw);
+            }
+        } else {
+            console.log("Vertical Connector");
+            if ((connectorDimensions[3] / 10) <= (numRows + numColumns)) {
+                alert("Size of the connector short for the Sensor!!");
+                connectorBlock = generateVerticalConnector(astarGraph, numRows + numColumns, connectorDimensions[0], connectorDimensions[1], connectorDimensions[2], 10, draw);
+            } else {
+                connectorBlock = generateVerticalConnector(astarGraph, connectorDimensions[3] / 10, connectorDimensions[0], connectorDimensions[1], connectorDimensions[2], 10, draw);
+            }
+        }
+       // connectorBlock.forward();
+        astarGraph = connectorBlock[0];
+        connectorBlock = connectorBlock[1];
+        
+        astarGraph = blockAllElectrodes(astarGraph, filteredRowElectrodes, filteredColumnElectrodes, draw);
+        //renderAstarGrid(astarGraph, draw);
+
+        astarGraph = routeColumnsToConnector(astarGraph, filteredColumnElectrodes, bBox, inputShapePointList, connectorBlock, 0, draw, txLayer);
+        astarGraph = freeWallOutsideInputShape(astarGraph, bBox, inputShapePointList, draw);
+      //  renderAstarGrid(astarGraph, draw);
+        astarGraph = blockAllElectrodes(astarGraph, filteredRowElectrodes, filteredColumnElectrodes, draw);
+        astarGraph = routeRowsToConnector(astarGraph, filteredRowElectrodes, bBox, inputShapePointList, connectorBlock, numColumns, draw, rxLayer);
+       
+        //   renderTXLayer();
+        show_save();
+        svgContent = draw.svg();
+
+
+    }
+    function renderShieldLayer() {
+
+
+        shieldLayer.viewbox(0, 0, 210, 297);
+
+        var svg = document.getElementsByTagName('svg')[0];
+        var inputPolygon = document.getElementById("inputShape");
+        var boundaryPolygon = document.getElementById("boundaryShape");
+        var connector = document.getElementById("connector");
+
+        var inputPointString = inputPolygon.getAttribute("points");
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+
+        var bBox = generateShieldingBox(inputShapePointList, shieldLayer, true);
+        console.log(bBox.x());
+
+       /* var inputPolygonShape = shieldLayer.polygon(inputPointString).fill('none').stroke({ width: 1 })
+        inputPolygonShape.fill('#888');
+        inputPolygonShape.stroke({ color: '#888', width: 1, linecap: 'round', linejoin: 'round' });*/
+
+    }
+
+    function renderRXLayer() {
+
+        var svg = document.getElementsByTagName('svg')[0];
+        var inputPolygon = document.getElementById("inputShape");
+        var boundaryPolygon = document.getElementById("boundaryShape");
+        var connector = document.getElementById("connector");
+
+        var inputPointString = inputPolygon.getAttribute("points");
+        //  document.getElementById("inputPointList").innerHTML = inputPointString;
+        console.log(inputPointString);
+
+        var boundaryPointString = boundaryPolygon.getAttribute("points");
+        ///  document.getElementById("boundaryPointList").innerHTML = boundaryPointString;
+        console.log(boundaryPointString);
+
+        var connectorPointString = connector.getAttribute("points");
+        //  document.getElementById("connectorPointList").innerHTML = connectorPointString;
+        console.log(connectorPointString);
+
+
+
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var gridElementSize = 1;
+        var rxAstarGraph = [[]];
+        rxAstarGraph = init_AStar(rxAstarGraph, 300, 520, 1, 1);
+        createAstarGraphWithBoundary(rxAstarGraph, boundaryShapePointList);
+
+        var bBox = generateBoundingBox(inputShapePointList, rxLayer, false);
+        console.log(bBox.x());
+
+        var numRows = Math.floor(bBox.height() / (electrodeSize * 1.5));
+        var numColumns = Math.floor(bBox.width() / (electrodeSize * 1.5));
+        var rxElectrodes = new Array();
+       
+        // rxElectrodes = 
+        rxElectrodes = generateRXLayerElectrodes(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x(), bBox.y(), rxElectrodes, rxLayer);
+        rxElectrodes = filterRXElectrodes(rxElectrodes, inputShapePointList, numRows, numColumns, rxLayer);
+
+    }
+
+    function renderTXLayer() {
+        var svg = document.getElementsByTagName('svg')[0];
+        var inputPolygon = document.getElementById("inputShape");
+        var boundaryPolygon = document.getElementById("boundaryShape");
+        var connector = document.getElementById("connector");
+
+        var inputPointString = inputPolygon.getAttribute("points");
+        //  document.getElementById("inputPointList").innerHTML = inputPointString;
+        console.log(inputPointString);
+
+        var boundaryPointString = boundaryPolygon.getAttribute("points");
+        ///  document.getElementById("boundaryPointList").innerHTML = boundaryPointString;
+        console.log(boundaryPointString);
+
+        var connectorPointString = connector.getAttribute("points");
+        //  document.getElementById("connectorPointList").innerHTML = connectorPointString;
+        console.log(connectorPointString);
+
+
+
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var gridElementSize = 1;
+        var txAstarGraph = [[]];
+        txAstarGraph = init_AStar(txAstarGraph, 300, 520, 1, 1);
+        createAstarGraphWithBoundary(txAstarGraph, boundaryShapePointList);
+
+        var bBox = generateBoundingBox(inputShapePointList, txLayer, false);
+        console.log(bBox.x());
+
+        var numRows = Math.floor(bBox.height() / (electrodeSize * 1.5));
+        var numColumns = Math.floor(bBox.width() / (electrodeSize * 1.5));
+       
+        var txElectrodes = new Array();
+       // rxElectrodes = 
+        txElectrodes = generateTXLayerElectrodes(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x() + (electrodeSpacing * 0.5), bBox.y() - (electrodeSpacing * 0.5), txElectrodes, txLayer);
+        txElectrodes = filterTXElectrodes(txElectrodes, inputShapePointList, numRows, numColumns, txLayer);
+   
+
+    }
+
+    function downloadSVG() {
+
+        var uriContent = "data:application/octet-stream," + encodeURIComponent(svgContent);
+        newWindow = window.open(uriContent, 'svgDocument');
+
+    }
+</script>
