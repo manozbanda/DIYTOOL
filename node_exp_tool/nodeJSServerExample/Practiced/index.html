@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>expSampleServer</title>
+  
+
+    <script type="text/css" src="public/stylesheets/css_link.css"></script>
+    <script type="text/css" src="public/stylesheets/bootstrap.min.css" ></script>
+    <script type="text/javascript" src="public/javascripts/svg.js.js"></script>
+    <script type="text/javascript" src="public/javascripts/main.js"></script>
+
+
+</head>
+<body>
+ 
+No.of Rows:<input type="number" name="rows">
+No.of columns: <input type="number" name="coloms">
+	Type of Actuator: <select name="actuator">
+<option value="4">Pedot4</option>
+<option value="1">Silver</option>
+<option value="Carbon">Carbon3</option>
+</select>
+Location : <select name="location">
+<option value="Finger">Finger</option>
+<option value="Forearm">Forearm</option>
+<option value="Stomach">Stomach</option>
+<option value="Leg">Leg</option>
+<option value="Chest">Chest</option>
+</select>
+
+
+<div id="drawing"></div>
+<button onclick="generateSensor()" id="generateButton" class="btn btn-success btn-lg" onkeypress="generateSensor()">Generate Actuator</button>
+<button onclick="saveSVG()" id="saveButton" class="btn btn-success btn-lg" onkeypress="saveSVG()">Save</button>
+
+    
+</body>
+</html>
+

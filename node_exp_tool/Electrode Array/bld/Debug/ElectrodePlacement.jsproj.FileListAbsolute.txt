@@ -1,0 +1,16 @@
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bin\Debug\ReverseMap\resources.pri
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bin\Debug\AppxManifest.xml
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bin\Debug\ElectrodePlacement.build.appxrecipe
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\ResourceHandlingTask.state
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\priconfig.xml
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\priconfig.xml.intermediate
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\layout.resfiles
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\layout.resfiles.intermediate
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\resources.resfiles
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\resources.resfiles.intermediate
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\pri.resfiles
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\pri.resfiles.intermediate
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\qualifiers.txt
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\qualifiers.txt.intermediate
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\MultipleQualifiersPerDimensionFound.txt
+c:\users\aditya\documents\visual studio 2015\Projects\ElectrodePlacement\ElectrodePlacement\bld\Debug\ProjectArchitectures.txt

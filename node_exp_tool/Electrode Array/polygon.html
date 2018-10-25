@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link href="css/default.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="js/svg.js.js"></script>
+    <script type="text/javascript" src="js/astar.js"></script>
+    <script type="text/javascript" src="js/utils.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript">
+        window.onload = function () {
+
+            var slider = document.getElementById("scale");
+            var scalingValue = 1;
+            var draw = SVG('drawing').size(1024, 1024);
+            var electrodeSize = 19;
+            var rowElectrodes = new Array();
+            var columnElectrodes = new Array();
+
+
+            var electrodeSpacing = electrodeSize * 1.5;
+            var rowSpacing = electrodeSize * 1.5;
+            var numColumns, numRows;
+
+            var pointList = [[105.400, 226.100], [56.500, 195.100], [42.500, 141.500], [67.500, 68.300], [110.400, 46.500], [156.700, 60.900], [137.400, 109.900], [118.600, 117.000], [90.600, 166.700], [114.300, 213.500], [105.400, 226.100]];
+
+
+            //var path = draw.polygon('105.400 226.100, 56.500 195.100, 42.500 141.500, 67.500 68.300, 110.400 46.500, 156.700 60.900, 137.400 109.900, 118.600 117.000, 90.600 166.700, 114.300 213.500, 105.400 226.100')
+            var inputPolygon = draw.polygon(pointList);
+            inputPolygon.fill('none').move(512, 512);
+            inputPolygon.scale(scalingValue, scalingValue);
+            inputPolygon.stroke({ color: '#f06', width: 2, linecap: 'round', linejoin: 'round' });
+
+            
+            var polyBBox = generateBoundingBox(pointList, draw);
+
+          //  console.log("Box Width : " + polyBBox.width());
+           // console.log("Box Height : " + polyBBox.height());
+
+            numColumns = Math.floor(polyBBox.width() / (electrodeSize * 1.5));
+            console.log("Num rows : " + numColumns);
+            numRows = Math.floor(polyBBox.height() / (electrodeSize * 1.5));
+            console.log("Num columns : " + numRows);
+
+            var pointArray = new SVG.PointArray();
+            pointArray = inputPolygon.array();
+            console.log(pointArray);
+            var pointString = pointArray.toString();
+            var listOfPoints = pointString.split(' ');
+
+
+            var xPos = [];
+            var yPos = [];
+            for (var i = 0 ; i < listOfPoints.length; i++) {
+
+                xPos[i] = parseFloat(listOfPoints[i].split(',')[0]);
+                yPos[i] = parseFloat(listOfPoints[i].split(',')[1]);
+
+            }
+
+            var polygonPoints = [[, ], [, ]]
+            var tempPoint = [];
+
+            for (var i = 0 ; i < xPos.length; i++) {
+
+                tempPoint.push(xPos[i], yPos[i]);// = xPos[i];
+                polygonPoints[i] = tempPoint;
+                tempPoint = [];
+
+            }
+            console.log(polygonPoints);
+
+            rowElectrodes = generateRows(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, polyBBox.cx() - polyBBox.width() / 2, polyBBox.cy() - polyBBox.height() / 2, rowElectrodes, draw);
+            columnElectrodes = generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, (polyBBox.cx() - polyBBox.width() / 2) + (electrodeSpacing * 0.5), (polyBBox.cy() - polyBBox.height() / 2) - (electrodeSpacing * 0.5), columnElectrodes, draw);
+
+            
+
+            
+            for (var i = 0 ; i < numRows + 1; i++) {
+                for (var j = 0 ; j < numColumns + 1; j++) {
+                    if (inside([rowElectrodes[i][j].cx(), rowElectrodes[i][j].cy()], polygonPoints) == false) {
+                        //console.log("Row [i][j] :" + i + " " + j);
+                        rowElectrodes[i][j].remove();
+
+                    }
+                    if (inside([columnElectrodes[j][j].cx(), columnElectrodes[j][i].cy()], polygonPoints) == false) {
+                        // console.log("Row [i][j] :" + i + " " + j);
+                        columnElectrodes[j][i].remove();
+
+                    }
+                }
+
+            }
+           /* // columnElectrodes[0][0].remove();
+            console.log("rows : " + numRows);
+            console.log("Columns : " + numColumns);
+           // columnElectrodes[0][6].remove();
+
+            for (var i = 0 ; i < numRows + 1; i++) {
+                for (var j = 0 ; j < numColumns + 1; j++) {
+                    console.log("Row [i][j] :" + i + " " + j);
+                    if (inside([columnElectrodes[j][j].cx(), columnElectrodes[j][i].cy()], polygonPoints) == false) {
+                       // console.log("Row [i][j] :" + i + " " + j);
+                        columnElectrodes[j][i].remove();
+
+                    }
+                }
+
+            }*/
+           
+
+            slider.oninput = function () {
+                draw.clear();
+
+                inputPolygon = draw.polygon(pointList);
+                inputPolygon.fill('none').move(512, 512);
+                inputPolygon.scale(scalingValue, scalingValue);
+                inputPolygon.stroke({ color: '#f06', width: 2, linecap: 'round', linejoin: 'round' });
+
+                polyBBox = generateBoundingBox(pointList, draw);
+
+                rowElectrodes = [];
+                columnElectrodes = [];
+                console.log(this.value);
+                scalingValue = this.value;
+               
+                inputPolygon.scale(scalingValue, scalingValue);
+                polyBBox = polyBBox.scale(scalingValue, scalingValue);
+                //console.log(inputPolygon.array());
+                console.log(polyBBox.width() * scalingValue);
+
+                var scaledWidth = polyBBox.width() * scalingValue;
+                var scaledHeight = polyBBox.height() * scalingValue;
+
+                numColumns = Math.floor(scaledWidth / (electrodeSize * 1.5));
+                console.log("Num rows : " + numColumns);
+                numRows = Math.floor(scaledHeight / (electrodeSize * 1.5));
+                console.log("Num columns : " + numRows);
+                
+                pointArray = inputPolygon.array();
+                console.log(pointArray);
+                pointString = pointArray.toString();
+                listOfPoints = pointString.split(' ');
+
+
+                xPos = [];
+                yPos = [];
+                for (var i = 0 ; i < listOfPoints.length; i++) {
+
+                    xPos[i] = parseFloat(listOfPoints[i].split(',')[0]);
+                    yPos[i] = parseFloat(listOfPoints[i].split(',')[1]);
+
+                }
+
+                polygonPoints = [[, ], [, ]]
+                tempPoint = [];
+
+                for (var i = 0 ; i < xPos.length; i++) {
+
+                    tempPoint.push(xPos[i], yPos[i]);// = xPos[i];
+                    polygonPoints[i] = tempPoint;
+                    tempPoint = [];
+
+                }
+                
+                rowElectrodes = generateRows(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, polyBBox.cx() - scaledWidth/2, polyBBox.cy() - scaledHeight/2, rowElectrodes, draw);
+                columnElectrodes = generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, (polyBBox.cx() - scaledWidth/2) + (electrodeSpacing * 0.5), (polyBBox.cy() - scaledHeight/2) - (electrodeSpacing * 0.5), columnElectrodes, draw);
+
+                
+
+
+
+                for (var i = 0 ; i < numRows + 1; i++) {
+                    for (var j = 0 ; j < numColumns + 1; j++) {
+                        if (inside([rowElectrodes[i][j].cx(), rowElectrodes[i][j].cy()], polygonPoints) == false) {
+                            //console.log("Row [i][j] :" + i + " " + j);
+                            rowElectrodes[i][j].remove();
+
+                        }
+                        if (inside([columnElectrodes[j][j].cx(), columnElectrodes[j][i].cy()], polygonPoints) == false) {
+                            // console.log("Row [i][j] :" + i + " " + j);
+                            columnElectrodes[j][i].remove();
+
+                        }
+                    }
+
+                }
+
+                /*for (var i = 0 ; i < numRows + 1; i++) {
+                    for (var j = 0 ; j < numColumns + 1; j++) {
+                        if (pipForCircle(circle.width() / 2, circle.cx(), circle.cy(), rowElectrodes[i][j].cx(), rowElectrodes[i][j].cy()) == 1) {
+                            //console.log("Row [i][j] :" + i + " " + j);
+                            rowElectrodes[i][j].remove();
+
+                        }
+                        if (pipForCircle(circle.width() / 2, circle.cx(), circle.cy(), columnElectrodes[i][j].cx(), columnElectrodes[i][j].cy()) == 1) {
+                            //    console.log("Row [i][j] :" + i + " " + j);
+                            columnElectrodes[i][j].remove();
+
+                        }
+
+                    }
+                }*/
+
+
+            }
+            
+
+            
+            
+
+
+
+    }
+    </script>
+    
+    
+    
+    <title></title>
+</head>
+
+
+<body>
+    <div id="drawing">
+        
+    </div>
+
+    <div id="slidecontainer">
+        <h3> Scale : </h3>
+        <input type="range" min="1" max="10" value="2" class="slider" id="scale">
+        <p>Value: <span id="demo"></span></p>
+    </div>
+</body>
+</html>
