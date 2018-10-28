@@ -5,7 +5,7 @@
     <title>Multi-Touch Sensor Designer</title>
     <link rel = "stylesheet" href = "node_modules/photon/dist/css/photon.css"/> 
     <link rel="stylesheet" href="node_modules/xel/stylesheets/material.theme.css">
-    <link rel="stylesheet" src="css/custom.css">
+    <link href="css/default.css" rel="stylesheet" />
     
     <script src="node_modules/xel/xel.min.js"></script>
 
@@ -104,29 +104,28 @@
             <div class = "pane-sm sidebar" > 
 
               <br/>
-                <div id="slidecontainer">
-                    <h5> Electrode Resolution </h5>
-                    <input type="range" min="5" max="20" value="10" class="slider" id="electrodeResSlider">
-                </div>
-                <div id="polygonScaling">
-                    <h5> Scale Polygon </h5>
-                    <input type="range" min="1" max="5" value="1" class="slider" id="polygonScaler">
-                </div>
-                <div id="spacingScaling">
-                    <h5> Scale Spacing </h5>
-                    <input type="range" min="1.5" max="2.5" step="0.1" value="1.5" class="slider" id="spacingScaler">
-                </div>
-                <form>
-                    <input type="radio" name="electrodeShape" value="Square" checked> Square<br>
-                    <input type="radio" name="electrodeShape" value="Circle">Circle<br>
-                    <input type="radio" name="electrodeShape" value="other"> Other
-                  </form>
-
-
-
-
-
-            </div> 
+              <div id="slidecontainer">
+                <h3> Electrode Resolution </h3>
+                <input type="range" min="5" max="20" value="10" class="slider" id="electrodeResSlider">
+                <p>Value: <span id="demo"></span></p>
+            </div>
+            <div id="polygonScaling">
+                <h3> Scale Polygon </h3>
+                <input type="range" min="1" max="5" value="1" class="slider" id="polygonScaler">
+                <p>Value: <span id="demo"></span></p>
+             </div>
+            <div id="spacingScaling">
+                <h3> Scale Spacing </h3>
+                <input type="range" min="1.5" max="2.5" step="0.1" value="1.5" class="slider" id="spacingScaler">
+                <p>Value: <span id="demo"></span></p>
+            </div>
+            <form>
+                <input type="radio" name="electrodeShape" value="Square" > Square<br>
+                <input type="radio" name="electrodeShape" value="Circle">Circle<br>
+                <input type="radio" name="electrodeShape" value="other"> Other
+              </form>
+             
+               
             <x-box id="drawing" class= "panel-body" >           
             </x-box>
               <x-box>
@@ -134,7 +133,7 @@
                   <x-icon name="delete"></x-icon>
                   <x-icon name="settings"></x-icon>
               </x-box>
-
+              
 
              
             
@@ -157,12 +156,18 @@
                   </div>
                  
               </div>-->
-             
+              
 
-          </Div>
+
+
+
+
+        </div>
+
+          </div>
             
-        </Div>
-      </Div>
+        </div>
+      </div>
 
 
 </body>
