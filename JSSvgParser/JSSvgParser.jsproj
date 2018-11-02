@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|AnyCPU">
@@ -71,6 +71,7 @@
     <Content Include="css\default.css" />
     <Content Include="js\pathUtils.js" />
     <Content Include="js\svgParser.js" />
+    <Content Include="MTSkin_UI.html" />
     <Content Include="MultiTouchSkin_v1.html" />
     <Content Include="tx_rx_layerRenderer.js" />
     <Content Include="UITest.html" />
