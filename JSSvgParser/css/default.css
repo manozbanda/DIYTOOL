@@ -88,12 +88,12 @@ div#two {
     
 }
   #slidecontainer {
-    width: 22%;
+    width: 15%;
 }
 
 .slider {
   -webkit-appearance: none;
-    width: 50%;
+    width: 10%;
     height: 15px;
     border-radius: 5px;   
     background: #d3d3d3;
@@ -126,3 +126,9 @@ div#two {
 }
   
 
+legend {
+     width: 20%;
+    background-color: #e57979;
+    color: #fff;
+    padding: 3px 6px;
+}

@@ -38,6 +38,45 @@
     return electrodeArray;
 }
 
+function generateSpacedRows(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, startX, startY, electrodeArray, draw) {
+
+    console.log("Generating Rows");
+    var rowElectrodes = new Array();
+
+    for (var i = 0; i < numRows + 1; i++) {
+        rowElectrodes = [];
+
+        for (var j = 0 ; j < numColumns + 1; j++) {
+            if (electrodeShape == 0) {
+                var rect1 = draw.rect(electrodeSize, electrodeSize).x(startX + (electrodeSpacing * j)).y(startY).attr({
+                    fill: '#008'
+                }).rotate(45);
+                rect1.type = "RX";
+                rect1.row = i;
+                rect1.column = j;
+                rect1.status = "Active";
+            }
+            else {
+                var rect1 = draw.circle(electrodeSize, electrodeSize).x(startX + (electrodeSpacing * j)).y(startY).attr({
+                    fill: '#008'
+                });
+                rect1.type = "RX";
+                rect1.row = i;
+                rect1.column = j;
+                rect1.status = "Active";
+            }
+
+
+
+
+            rowElectrodes[j] = rect1;
+            // console.log(i + " " + j);
+        }
+        startY = startY + electrodeSpacing;
+        electrodeArray.push(rowElectrodes);
+    }
+    return electrodeArray;
+}
 
 
 function generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, startX, startY, electrodeArray, draw) {
@@ -72,6 +111,43 @@ function generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, e
             columnElectrodes[j] = rect1;
         }
         startX = startX + rowSpacing;
+        electrodeArray[i] = columnElectrodes;
+    }
+    return electrodeArray;
+}
+
+function generateSpacedColumns(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, startX, startY, electrodeArray, draw) {
+
+    console.log("Generating Columns");
+    var columnElectrodes = new Array();
+
+    for (var i = 0; i < numColumns + 1 ; i++) {
+        columnElectrodes = [];
+
+        for (var j = 0 ; j < numRows + 1; j++) {
+            if (electrodeShape == 0) {
+                var rect1 = draw.rect(electrodeSize, electrodeSize).x(startX).y(startY + electrodeSpacing * j).attr({
+                    fill: '#800'
+                }).rotate(45);
+                rect1.type = "TX";
+                rect1.row = i;
+                rect1.column = j;
+                rect1.status = "Active";
+            }
+            else {
+                var rect1 = draw.circle(electrodeSize, electrodeSize).x(startX).y(startY + electrodeSpacing * j).attr({
+                    fill: '#800'
+                }).rotate(45);
+                rect1.type = "TX";
+                rect1.row = i;
+                rect1.column = j;
+                rect1.status = "Active";
+            }
+
+
+            columnElectrodes[j] = rect1;
+        }
+        startX = startX + electrodeSpacing;
         electrodeArray[i] = columnElectrodes;
     }
     return electrodeArray;

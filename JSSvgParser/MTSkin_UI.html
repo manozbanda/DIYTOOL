@@ -27,7 +27,7 @@
         <div class="container-fluid">
             <div class="navbar-header">
                 <img src="images/picture1.png" style="display: inline-block;" height="50" width="50">
-                <span style="display: inline-block; color:wheat ;font-size:24px">Multi-Touch Skin</span>
+                <span style="display: inline-block; color:wheat ;font-size:24px">Design Tool 2.0</span>
             </div>
         </div>
     </nav>
@@ -94,6 +94,10 @@
 <button onclick="generateRoutings()" id="myBtn" class="btn btn-success btn-lg" onkeypress="astarfail()">Generate Routing</button>
 <button id="save" class="btn btn-info btn-lg" onclick="downloadSVG()" style="margin-left: 960px; margin-top: -60px; display:none;">Save</button>
 
+<br/>
+<br/>
+<br/>
+<legend>Actuator Design Parameters</legend>
 <div id="slidecontainer">
     <h3>Electrode Size </h3>
     <input type="range" min="1" max="12" value="6" step="0.05" class="slider" id="electrode_Size_Slider">
@@ -105,7 +109,26 @@
     <input type="range" min="1" max="3" value="1.5" step="0.05" class="slider" id="electrode_Spacing_Slider">
     <p>Value: <span id="electrodeSpacingLabel"></span></p>
 </div>
+ <br/>
+<legend>Body Location Presets</legend>
 
+<div>
+    <input type="radio" id="fingertip"
+           name="finger" value="0" checked />
+    <label for="huey">Fingertip</label>
+</div>
+
+<div>
+    <input type="radio" id="forearm"
+           name="arm" value="1" />
+    <label for="dewey">Forearm</label>
+</div>
+
+<div>
+    <input type="radio" id="louie"
+           name="drone" value="louie" />
+    <label for="louie">Louie</label>
+</div>
 </div>
 
 <script>
@@ -255,7 +278,13 @@ electrode_spacing_slider.oninput = function () {
         //createAstarGraphWithBoundary(astarGraph, boundaryShapePointList);
 
 
+      /*  inputShapePointList = scalePoints(2, inputShapePointList);
+        boundaryShapePointList = scalePoints(2, boundaryShapePointList);
+        connectorPointList = scalePoints(2, connectorPointList);
 
+        inputShapePointList = convertPointListToString(inputShapePointList);
+        boundaryShapePointList = convertPointListToString(boundaryShapePointList);
+        connectorPointList = convertPointListToString(connectorPointList);*/
 
         var inputPolygonShape = draw.polygon(inputPointString).fill('none').stroke({ width: 1 })
         inputPolygonShape.fill('none');
@@ -273,8 +302,8 @@ electrode_spacing_slider.oninput = function () {
             //return;
         }
 
-        rowElectrodes = generateRows(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, bBox.x(), bBox.y(), rowElectrodes, draw);
-        columnElectrodes = generateColumns(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, bBox.x() + (electrodeSpacing * (0.5)), bBox.y() - (electrodeSpacing * (0.5)), columnElectrodes, draw);
+        rowElectrodes = generateSpacedRows(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, bBox.x(), bBox.y(), rowElectrodes, draw);
+        columnElectrodes = generateSpacedColumns(numRows, numColumns, electrodeSize, electrodeSpacing, electrodeShape, rowSpacing, bBox.x() + (electrodeSpacing * (0.5)), bBox.y() - (electrodeSpacing * (0.5)), columnElectrodes, draw);
 
         rowElectrodes = filterRows(rowElectrodes, columnElectrodes, inputShapePointList, numRows, numColumns, draw);
         columnElectrodes = filterColumns(rowElectrodes, columnElectrodes, inputShapePointList, numRows, numColumns, draw);
@@ -282,7 +311,7 @@ electrode_spacing_slider.oninput = function () {
         rowElectrodes = checkForDanglingRowElectrodes(rowElectrodes, columnElectrodes, inputShapePointList, draw);
         columnElectrodes = checkForDanglingColumnElectrodes(rowElectrodes, columnElectrodes, inputShapePointList, draw);
 
-         filteredRowElectrodes = getActiveElectrodes(rowElectrodes);
+        filteredRowElectrodes = getActiveElectrodes(rowElectrodes);
         filteredColumnElectrodes = getActiveElectrodes(columnElectrodes);
 
         
