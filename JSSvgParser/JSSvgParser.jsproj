@@ -71,6 +71,7 @@
     <Content Include="css\default.css" />
     <Content Include="js\pathUtils.js" />
     <Content Include="js\svgParser.js" />
+    <Content Include="ETActuator_UI.html" />
     <Content Include="MTSkin_UI.html" />
     <Content Include="MultiTouchSkin_v1.html" />
     <Content Include="tx_rx_layerRenderer.js" />

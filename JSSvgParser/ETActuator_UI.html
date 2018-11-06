@@ -20,7 +20,7 @@
     <script type="text/javascript" src="interactive_components/common/polygon_utils.js"></script>
     <script type="text/javascript" src="interactive_components/ElectrodeGenerator.js"></script>
     <script type="text/javascript" src="interactive_components/routingGeneration.js"></script>
-    <script type="text/javascript" src="interactive_components/layerRenderer/tx_rx_layerRenderer.js"></script>
+    <script type="text/javascript" src="interactive_components/actuator_layer_renderer/tx_rx_layerRenderer.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-inverse">
@@ -52,7 +52,8 @@
                     <li class="active"><a data-toggle="tab" href="#home" onclick="hide_save()">Complete</a></li>
                     <li><a data-toggle="tab" href="#RXLayer" onclick="renderRXLayer()">Receiver</a></li>
                     <li><a data-toggle="tab" href="#TXLayer" onclick="renderTXLayer()">Transmitter</a></li>
-                    <li><a data-toggle="tab" href="#shieldLayer" onclick="renderShieldLayer()">Shielding Layer</a></li>
+                    <li><a data-toggle="tab" href="#shieldLayer" onclick="renderDielectricLayer1()">Dielectric Layer 2</a></li>
+                    <li><a data-toggle="tab" href="#dielectricLayer2" onclick="renderDielectricLayer2()">Dielectric Layer 1</a></li>
 
                 </ul>
                 <div class="tab-content">
@@ -76,6 +77,9 @@
                     <div id="shieldLayer" class="tab-pane fade">
                     </div>
 
+                    <div id="dielectricLayer2" class="tab-pane fade">
+                    </div>
+
                 </div>
             </div>
             <!-- <div id="imgsrc" width="300px" height="350px">
@@ -94,9 +98,9 @@
 <button onclick="generateRoutings()" id="myBtn" class="btn btn-success btn-lg" onkeypress="astarfail()">Generate Routing</button>
 <button id="save" class="btn btn-info btn-lg" onclick="downloadSVG()" style="margin-left: 960px; margin-top: -60px; display:none;">Save</button>
 
-<br />
-<br />
-<br />
+<br/>
+<br/>
+<br/>
 <legend>Actuator Design Parameters</legend>
 <div id="slidecontainer">
     <h3>Electrode Size </h3>
@@ -109,6 +113,7 @@
     <input type="range" min="1" max="3" value="1.5" step="0.05" class="slider" id="electrode_Spacing_Slider">
     <p>Value: <span id="electrodeSpacingLabel"></span></p>
 </div>
+ <br/>
 
 </div>
 
@@ -151,10 +156,14 @@ electrode_spacing_slider.oninput = function () {
     var shieldLayer = SVG('shieldLayer').size(300, 520);
     var rxLayer = SVG('RXLayer').size(300, 520);
     var txLayer = SVG('TXLayer').size(300, 520);
+    var dielectricLayer2 = SVG('dielectricLayer2').size(300, 520);
     rxLayer.viewbox(0, 0, 300, 520);
+    txLayer.viewbox(0, 0, 300, 520);
+    dielectricLayer2.viewbox(0, 0, 300, 520);
+    shieldLayer.viewbox(0, 0, 300, 520);
 
     var svgContent;
-    txLayer.viewbox(0, 0, 300, 520);
+    
     var rowElectrodes = new Array();
     var columnElectrodes = new Array();
 
@@ -215,8 +224,8 @@ electrode_spacing_slider.oninput = function () {
     }
 
 
-
-    var electrodeShape = 0; // 0 for rectangle and 1 for circle
+    
+    var electrodeShape = 1; // 0 for rectangle and 1 for circle
 
     function generateSensor() {
         console.log("Generating Electrodes!!");
@@ -254,7 +263,7 @@ electrode_spacing_slider.oninput = function () {
         boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
         connectorPointList = convertpointStringToPointList(connectorPointString);
 
-
+        
         //astarGraph = init_AStar(astarGraph, 600, 1040, 1, 1);
         //createAstarGraphWithBoundary(astarGraph, boundaryShapePointList);
 
@@ -295,7 +304,7 @@ electrode_spacing_slider.oninput = function () {
         filteredRowElectrodes = getActiveElectrodes(rowElectrodes);
         filteredColumnElectrodes = getActiveElectrodes(columnElectrodes);
 
-
+        
     }
 
     function generateRoutings() {
@@ -374,6 +383,111 @@ electrode_spacing_slider.oninput = function () {
 
     }
 
+    function renderDielectricLayer1() {
+        shieldLayer.viewbox(0, 0, 300, 520);
+
+        var svg = document.getElementsByTagName('svg')[0];
+        var inputPolygon = document.getElementById("inputShape");
+        var boundaryPolygon = document.getElementById("boundaryShape");
+        var connector = document.getElementById("connector");
+
+        var inputPointString = inputPolygon.getAttribute("points");
+        //  document.getElementById("inputPointList").innerHTML = inputPointString;
+        console.log(inputPointString);
+
+        var boundaryPointString = boundaryPolygon.getAttribute("points");
+        ///  document.getElementById("boundaryPointList").innerHTML = boundaryPointString;
+        console.log(boundaryPointString);
+
+        var connectorPointString = connector.getAttribute("points");
+        //  document.getElementById("connectorPointList").innerHTML = connectorPointString;
+        console.log(connectorPointString);
+
+
+
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var gridElementSize = 1;
+        var rxAstarGraph = [[]];
+        rxAstarGraph = init_AStar(rxAstarGraph, 300, 520, 1, 1);
+        createAstarGraphWithBoundary(rxAstarGraph, boundaryShapePointList);
+
+        var bBox = generateBoundingBox(inputShapePointList, shieldLayer, false);
+        console.log(bBox.x());
+
+        var numRows = Math.floor(bBox.height() / (electrodeSize * 1.5));
+        var numColumns = Math.floor(bBox.width() / (electrodeSize * 1.5));
+        var rxElectrodes = new Array();
+
+        // rxElectrodes =
+        rxElectrodes = generateDielectricLayer1RXElectrodes(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x(), bBox.y(), rxElectrodes, shieldLayer);
+        rxElectrodes = filterRXElectrodes(rxElectrodes, inputShapePointList, numRows, numColumns, shieldLayer);
+
+        var txElectrodes = new Array();
+        // rxElectrodes =
+        txElectrodes = generateDielectricLayer1TXElectrodes(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x() + (electrodeSpacing * 0.5), bBox.y() - (electrodeSpacing * 0.5), txElectrodes, shieldLayer);
+        txElectrodes = filterTXElectrodes(txElectrodes, inputShapePointList, numRows, numColumns, shieldLayer);
+
+
+
+    }
+
+    function renderDielectricLayer2() {
+        dielectricLayer2.viewbox(0, 0, 300, 520);
+
+        var svg = document.getElementsByTagName('svg')[0];
+        var inputPolygon = document.getElementById("inputShape");
+        var boundaryPolygon = document.getElementById("boundaryShape");
+        var connector = document.getElementById("connector");
+
+        var inputPointString = inputPolygon.getAttribute("points");
+        //  document.getElementById("inputPointList").innerHTML = inputPointString;
+        console.log(inputPointString);
+
+        var boundaryPointString = boundaryPolygon.getAttribute("points");
+        ///  document.getElementById("boundaryPointList").innerHTML = boundaryPointString;
+        console.log(boundaryPointString);
+
+        var connectorPointString = connector.getAttribute("points");
+        //  document.getElementById("connectorPointList").innerHTML = connectorPointString;
+        console.log(connectorPointString);
+
+
+
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var inputShapePointList = convertpointStringToPointList(inputPointString);
+        var boundaryShapePointList = convertpointStringToPointList(boundaryPointString);
+        var connectorPointList = convertpointStringToPointList(connectorPointString);
+
+        var gridElementSize = 1;
+        var rxAstarGraph = [[]];
+        rxAstarGraph = init_AStar(rxAstarGraph, 300, 520, 1, 1);
+        createAstarGraphWithBoundary(rxAstarGraph, boundaryShapePointList);
+
+        var bBox = generateBoundingBox(inputShapePointList, dielectricLayer2, false);
+        console.log(bBox.x());
+
+        var numRows = Math.floor(bBox.height() / (electrodeSize * 1.5));
+        var numColumns = Math.floor(bBox.width() / (electrodeSize * 1.5));
+        var rxElectrodes = new Array();
+
+        // rxElectrodes =
+        rxElectrodes = generateDielectricLayer2Electrodes(numRows, numColumns, electrodeSize, electrodeSpacing, rowSpacing, bBox.x(), bBox.y(), rxElectrodes, dielectricLayer2);
+        rxElectrodes = filterRXElectrodes(rxElectrodes, inputShapePointList, numRows, numColumns, dielectricLayer2);
+
+
+
+    }
+
     function renderRXLayer() {
 
         var svg = document.getElementsByTagName('svg')[0];
@@ -416,6 +530,8 @@ electrode_spacing_slider.oninput = function () {
         rxElectrodes = filterRXElectrodes(rxElectrodes, inputShapePointList, numRows, numColumns, rxLayer);
 
     }
+
+
 
     function renderTXLayer() {
         var svg = document.getElementsByTagName('svg')[0];

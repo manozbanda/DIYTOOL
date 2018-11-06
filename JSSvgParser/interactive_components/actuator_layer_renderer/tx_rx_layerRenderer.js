@@ -7,7 +7,7 @@
         rowElectrodes = [];
 
         for (var j = 0; j < numColumns + 1; j++) {
-            var rect1 = rxLayer.rect(electrodeSize, electrodeSize).x(startX + (electrodeSpacing * j)).y(startY).attr({
+            var rect1 = rxLayer.circle(electrodeSize, electrodeSize).x(startX + (electrodeSpacing * j)).y(startY).attr({
                 fill: '#008'
             }).rotate(45);
             rect1.type = "RX";
@@ -36,7 +36,7 @@ function generateDielectricLayer2Electrodes(numRows, numColumns, electrodeSize, 
 
         for (var j = 0; j < numColumns + 1; j++) {
             var rect1 = dielectricLayer2.circle(electrodeSize, electrodeSize).x(startX + (electrodeSpacing * j)).y(startY).attr({
-                fill: '#fff'
+                fill: '#888'
             }).rotate(45);
             rect1.type = "RX";
             rect1.row = i;
@@ -55,7 +55,7 @@ function generateDielectricLayer2Electrodes(numRows, numColumns, electrodeSize, 
 }
 
 
-function   generateDielectricLayer1RXElectrodes(numRows, numColumns, electrodeSize, electrodespacing, rowSpacing, startX, startY, electrodeArray, dielectricLayer2) {
+function generateDielectricLayer1RXElectrodes(numRows, numColumns, electrodeSize, electrodespacing, rowSpacing, startX, startY, electrodeArray, dielectricLayer2) {
 
     console.log("Generating Rows");
     var rowElectrodes = new Array();
@@ -92,7 +92,7 @@ function generateDielectricLayer1TXElectrodes(numRows, numColumns, electrodeSize
         columnElectrodes = [];
 
         for (var j = 0; j < numRows + 1; j++) {
-            var rect1 = txLayer.circle(electrodeSize, electrodeSize).x(startX).y(startY + electrodeSpacing * j).attr({
+            var rect1 = dielectricLayer2.circle(electrodeSize, electrodeSize).x(startX).y(startY + electrodeSpacing * j).attr({
                 fill: '#888'
             }).rotate(45);
             rect1.type = "TX";
@@ -118,7 +118,7 @@ function generateTXLayerElectrodes(numRows, numColumns, electrodeSize, electrode
         columnElectrodes = [];
 
         for (var j = 0; j < numRows + 1; j++) {
-            var rect1 = txLayer.rect(electrodeSize, electrodeSize).x(startX).y(startY + electrodeSpacing * j).attr({
+            var rect1 = txLayer.circle(electrodeSize, electrodeSize).x(startX).y(startY + electrodeSpacing * j).attr({
                 fill: '#800'
             }).rotate(45);
             rect1.type = "TX";
